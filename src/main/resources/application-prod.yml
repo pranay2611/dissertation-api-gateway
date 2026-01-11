@@ -76,6 +76,7 @@ spring:
       #       allowCredentials: false
       #       maxAge: 3600
 
-  redis:
-    host: ${SPRING_REDIS_HOST:redis}
-    port: 6379
+  data:
+    redis:
+      host: ${SPRING_REDIS_HOST:redis}
+      port: 6379
