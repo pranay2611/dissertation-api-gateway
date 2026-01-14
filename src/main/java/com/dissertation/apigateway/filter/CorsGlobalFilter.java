@@ -90,15 +90,18 @@ public class CorsGlobalFilter implements GlobalFilter, Ordered {
                     }
                 })
                 .onErrorResume(throwable -> {
-                    // If there's an error and it's a localhost request, allow it
-                    if (isLocalhost && !response.isCommitted()) {
-                        log.warn("CorsGlobalFilter: Error for localhost request - allowing to proceed: {}", throwable.getMessage());
-                        response.setStatusCode(HttpStatus.OK);
-                        HttpHeaders respHeaders = response.getHeaders();
-                        respHeaders.set("Access-Control-Allow-Origin", "*");
-                        respHeaders.set("Access-Control-Allow-Methods", "GET, POST, PUT, DELETE, PATCH, OPTIONS, HEAD");
-                        respHeaders.set("Access-Control-Allow-Headers", "*");
-                        return response.setComplete();
+                    // Only handle specific CORS-related errors, not all errors
+                    // For 405 METHOD_NOT_ALLOWED, this might be a routing issue - don't swallow it
+                    String errorMessage = throwable.getMessage();
+                    if (errorMessage != null && errorMessage.contains("405 METHOD_NOT_ALLOWED")) {
+                        log.error("CorsGlobalFilter: Received 405 METHOD_NOT_ALLOWED error. This indicates a routing issue. Error: {}", errorMessage);
+                        // Don't swallow 405 errors - let them propagate so we can see the real issue
+                        return Mono.error(throwable);
+                    }
+                    
+                    // For other errors on localhost, log but don't swallow - let the error propagate
+                    if (isLocalhost) {
+                        log.error("CorsGlobalFilter: Error for localhost request: {}", throwable.getMessage(), throwable);
                     }
                     return Mono.error(throwable);
                 });

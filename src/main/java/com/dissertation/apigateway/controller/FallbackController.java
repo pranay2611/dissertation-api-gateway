@@ -2,7 +2,11 @@ package com.dissertation.apigateway.controller;
 
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
+import org.springframework.web.bind.annotation.DeleteMapping;
 import org.springframework.web.bind.annotation.GetMapping;
+import org.springframework.web.bind.annotation.PatchMapping;
+import org.springframework.web.bind.annotation.PostMapping;
+import org.springframework.web.bind.annotation.PutMapping;
 import org.springframework.web.bind.annotation.RequestMapping;
 import org.springframework.web.bind.annotation.RestController;
 
@@ -15,21 +19,34 @@ import java.util.Map;
 public class FallbackController {
     
     @GetMapping("/user-service")
+    @PostMapping("/user-service")
+    @PutMapping("/user-service")
+    @DeleteMapping("/user-service")
     public ResponseEntity<Map<String, Object>> userServiceFallback() {
         return createFallbackResponse("User Service");
     }
     
     @GetMapping("/order-service")
+    @PostMapping("/order-service")
+    @PutMapping("/order-service")
+    @DeleteMapping("/order-service")
+    @PatchMapping("/order-service")
     public ResponseEntity<Map<String, Object>> orderServiceFallback() {
         return createFallbackResponse("Order Service");
     }
     
     @GetMapping("/payment-service")
+    @PostMapping("/payment-service")
+    @PutMapping("/payment-service")
+    @DeleteMapping("/payment-service")
     public ResponseEntity<Map<String, Object>> paymentServiceFallback() {
         return createFallbackResponse("Payment Service");
     }
     
     @GetMapping("/notification-service")
+    @PostMapping("/notification-service")
+    @PutMapping("/notification-service")
+    @DeleteMapping("/notification-service")
     public ResponseEntity<Map<String, Object>> notificationServiceFallback() {
         return createFallbackResponse("Notification Service");
     }

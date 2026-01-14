@@ -7,7 +7,28 @@ spring:
   cloud:
     gateway:
       routes:
-        # User Service Routes
+        # User Service Routes - explicit routes for common endpoints
+        - id: user-service-register
+          uri: http://localhost:8081
+          predicates:
+            - Path=/api/auth/register
+          filters:
+            - name: CircuitBreaker
+              args:
+                name: userServiceCircuitBreaker
+                fallbackUri: forward:/fallback/user-service
+        
+        - id: user-service-login
+          uri: http://localhost:8081
+          predicates:
+            - Path=/api/auth/login
+          filters:
+            - name: CircuitBreaker
+              args:
+                name: userServiceCircuitBreaker
+                fallbackUri: forward:/fallback/user-service
+        
+        # User Service Routes - catch-all for other auth endpoints
         - id: user-service
           uri: http://localhost:8081
           predicates:
@@ -18,21 +39,48 @@ spring:
                 name: userServiceCircuitBreaker
                 fallbackUri: forward:/fallback/user-service
         
-        # Order Service Routes
+        # Order Service Routes - POST /api/orders for order creation
+        - id: order-service-post
+          uri: http://localhost:8082
+          predicates:
+            - Path=/api/orders
+            - Method=POST
+          filters:
+            - name: AuthenticationFilter
+            - name: CircuitBreaker
+              args:
+                name: orderServiceCircuitBreaker
+                fallbackUri: forward:/fallback/order-service
+        
+        # Order Service Routes - GET /api/orders for getting all orders
+        - id: order-service-get-all
+          uri: http://localhost:8082
+          predicates:
+            - Path=/api/orders
+            - Method=GET
+          filters:
+            - name: AuthenticationFilter
+            - name: CircuitBreaker
+              args:
+                name: orderServiceCircuitBreaker
+                fallbackUri: forward:/fallback/order-service
+        
+        # Order Service Routes - sub-paths (for /api/orders/**)
         - id: order-service
           uri: http://localhost:8082
           predicates:
             - Path=/api/orders/**
           filters:
-            - AuthenticationFilter
+            - name: AuthenticationFilter
             - name: CircuitBreaker
               args:
                 name: orderServiceCircuitBreaker
                 fallbackUri: forward:/fallback/order-service
-            - name: RequestRateLimiter
-              args:
-                redis-rate-limiter.replenishRate: 10
-                redis-rate-limiter.burstCapacity: 20
+            # Temporarily disabled RequestRateLimiter due to Redis connectivity issues
+            # - name: RequestRateLimiter
+            #   args:
+            #     redis-rate-limiter.replenishRate: 10
+            #     redis-rate-limiter.burstCapacity: 20
         
         # Payment Service Routes
         - id: payment-service
@@ -40,7 +88,7 @@ spring:
           predicates:
             - Path=/api/payments/**
           filters:
-            - AuthenticationFilter
+            - name: AuthenticationFilter
             - name: CircuitBreaker
               args:
                 name: paymentServiceCircuitBreaker
@@ -52,7 +100,7 @@ spring:
           predicates:
             - Path=/api/notifications/**
           filters:
-            - AuthenticationFilter
+            - name: AuthenticationFilter
             - name: CircuitBreaker
               args:
                 name: notificationServiceCircuitBreaker
@@ -63,7 +111,7 @@ spring:
           args:
             retries: 3
             statuses: BAD_GATEWAY,SERVICE_UNAVAILABLE
-            methods: GET
+            methods: GET,POST,PUT,DELETE,PATCH,OPTIONS,HEAD
             backoff:
               firstBackoff: 50ms
               maxBackoff: 500ms
