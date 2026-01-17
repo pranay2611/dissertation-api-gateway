@@ -66,12 +66,24 @@ spring:
                 fallbackUri: forward:/fallback/order-service
           order: 2
         
-        # Order Service Routes - sub-paths (matches /api/orders/** for paths like /api/orders/{orderNumber}, /api/orders/user/{username})
-        # IMPORTANT: This route comes AFTER exact path routes, so /api/orders with POST/GET matches first
+        # Order Service Routes - single segment paths (e.g., /api/orders/ORD-123)
+        - id: order-service-single-segment
+          uri: http://localhost:8082
+          predicates:
+            - Path=/api/orders/{segment}
+          filters:
+            - name: CircuitBreaker
+              args:
+                name: orderServiceCircuitBreaker
+                fallbackUri: forward:/fallback/order-service
+          order: 3
+        
+        # Order Service Routes - multi-segment paths (e.g., /api/orders/user/{username})
+        # IMPORTANT: These routes come AFTER exact path routes, so /api/orders with POST/GET matches first
         - id: order-service
           uri: http://localhost:8082
           predicates:
-            - Path=/api/orders/**
+            - Path=/api/orders/{segment}/**
           filters:
             - name: CircuitBreaker
               args:
