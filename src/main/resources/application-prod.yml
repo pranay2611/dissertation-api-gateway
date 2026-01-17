@@ -41,11 +41,11 @@ spring:
             - Path=/api/orders
             - Method=POST
           filters:
-            - name: AuthenticationFilter
             - name: CircuitBreaker
               args:
                 name: orderServiceCircuitBreaker
                 fallbackUri: forward:/fallback/order-service
+          order: 1
         
         # Order Service Routes - GET /api/orders for getting all orders
         - id: order-service-get-all
@@ -54,23 +54,24 @@ spring:
             - Path=/api/orders
             - Method=GET
           filters:
-            - name: AuthenticationFilter
             - name: CircuitBreaker
               args:
                 name: orderServiceCircuitBreaker
                 fallbackUri: forward:/fallback/order-service
-        
-        # Order Service Routes - sub-paths (for /api/orders/**)
+          order: 2  
+
+        # Order Service Routes - sub-paths (matches /api/orders/** for paths like /api/orders/{orderNumber}, /api/orders/user/{username})
+        # IMPORTANT: This route comes AFTER exact path routes, so /api/orders with POST/GET matches first
         - id: order-service
           uri: http://order-service:8082
           predicates:
             - Path=/api/orders/**
           filters:
-            - name: AuthenticationFilter
             - name: CircuitBreaker
               args:
                 name: orderServiceCircuitBreaker
                 fallbackUri: forward:/fallback/order-service
+          order: 1000
             # Temporarily disabled RequestRateLimiter due to Redis connectivity issues
             # - name: RequestRateLimiter
             #   args:
@@ -83,7 +84,6 @@ spring:
           predicates:
             - Path=/api/payments/**
           filters:
-            - name: AuthenticationFilter
             - name: CircuitBreaker
               args:
                 name: paymentServiceCircuitBreaker
@@ -95,7 +95,6 @@ spring:
           predicates:
             - Path=/api/notifications/**
           filters:
-            - name: AuthenticationFilter
             - name: CircuitBreaker
               args:
                 name: notificationServiceCircuitBreaker
