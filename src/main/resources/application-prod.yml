@@ -35,11 +35,54 @@ spring:
                 fallbackUri: forward:/fallback/user-service
         
         # Order Service Routes - POST /api/orders for order creation
-        - id: order-service-post
+        # - id: order-service-post
+        #   uri: http://order-service:8082
+        #   predicates:
+        #     - Path=/api/orders
+        #     - Method=POST
+        #   filters:
+        #     - name: CircuitBreaker
+        #       args:
+        #         name: orderServiceCircuitBreaker
+        #         fallbackUri: forward:/fallback/order-service
+        #   order: 1
+        
+        # Order Service Routes - GET /api/orders for getting all orders
+        # - id: order-service-get-all
+        #   uri: http://order-service:8082
+        #   predicates:
+        #     - Path=/api/orders
+        #     - Method=GET
+        #   filters:
+        #     - name: CircuitBreaker
+        #       args:
+        #         name: orderServiceCircuitBreaker
+        #         fallbackUri: forward:/fallback/order-service
+        #   order: 2  
+
+        # Order Service Routes - sub-paths (matches /api/orders/** for paths like /api/orders/{orderNumber}, /api/orders/user/{username})
+        # IMPORTANT: This route comes AFTER exact path routes, so /api/orders with POST/GET matches first
+        # - id: order-service
+        #   uri: http://order-service:8082
+        #   predicates:
+        #     - Path=/api/orders/**
+        #   filters:
+        #     - name: CircuitBreaker
+        #       args:
+        #         name: orderServiceCircuitBreaker
+        #         fallbackUri: forward:/fallback/order-service
+        #   order: 1000
+            # Temporarily disabled RequestRateLimiter due to Redis connectivity issues
+            # - name: RequestRateLimiter
+            #   args:
+            #     redis-rate-limiter.replenishRate: 10
+            #     redis-rate-limiter.burstCapacity: 20
+        
+        # Order Service - Simplified: one route for exact path, one for subpaths
+        - id: order-service-exact
           uri: http://order-service:8082
           predicates:
             - Path=/api/orders
-            - Method=POST
           filters:
             - name: CircuitBreaker
               args:
@@ -47,22 +90,7 @@ spring:
                 fallbackUri: forward:/fallback/order-service
           order: 1
         
-        # Order Service Routes - GET /api/orders for getting all orders
-        - id: order-service-get-all
-          uri: http://order-service:8082
-          predicates:
-            - Path=/api/orders
-            - Method=GET
-          filters:
-            - name: CircuitBreaker
-              args:
-                name: orderServiceCircuitBreaker
-                fallbackUri: forward:/fallback/order-service
-          order: 2  
-
-        # Order Service Routes - sub-paths (matches /api/orders/** for paths like /api/orders/{orderNumber}, /api/orders/user/{username})
-        # IMPORTANT: This route comes AFTER exact path routes, so /api/orders with POST/GET matches first
-        - id: order-service
+        - id: order-service-subpaths
           uri: http://order-service:8082
           predicates:
             - Path=/api/orders/**
@@ -71,13 +99,8 @@ spring:
               args:
                 name: orderServiceCircuitBreaker
                 fallbackUri: forward:/fallback/order-service
-          order: 1000
-            # Temporarily disabled RequestRateLimiter due to Redis connectivity issues
-            # - name: RequestRateLimiter
-            #   args:
-            #     redis-rate-limiter.replenishRate: 10
-            #     redis-rate-limiter.burstCapacity: 20
-        
+          order: 100
+
         # Payment Service Routes
         - id: payment-service
           uri: http://payment-service:8083
