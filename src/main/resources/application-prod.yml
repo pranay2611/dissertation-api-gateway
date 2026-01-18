@@ -34,18 +34,6 @@ spring:
                 name: userServiceCircuitBreaker
                 fallbackUri: forward:/fallback/user-service
         
-        # Order Service Routes - OPTIONS handler for CORS preflight (must come first)
-        - id: order-service-options
-          uri: http://order-service:8082
-          predicates:
-            - Path=/api/orders,/api/orders/**
-            - Method=OPTIONS
-          filters:
-            - name: SetStatus
-              args:
-                status: 200
-          order: 0
-        
         # Order Service Routes - POST /api/orders for order creation
         - id: order-service-post
           uri: http://order-service:8082
